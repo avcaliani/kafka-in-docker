@@ -1,16 +1,25 @@
-FROM amazoncorretto:11-alpine3.18
+FROM amazoncorretto:21-alpine3.18
 
-ARG KAFKA_VERSION="3.7.0"
+# Kafka Version 👇
+ARG KAFKA_VERSION="4.0.0"
 ARG KAFKA_SCALA_VERSION="2.13"
 
 ENV KAFKA_HOME="/opt/kafka"
 ENV PATH="$PATH:${KAFKA_HOME}/bin"
 
-RUN apk add --no-cache bash
+# Installing Kafka 👇
 ADD "https://downloads.apache.org/kafka/${KAFKA_VERSION}/kafka_${KAFKA_SCALA_VERSION}-${KAFKA_VERSION}.tgz" /opt/
 RUN tar xfz /opt/kafka*.tgz -C /opt && rm /opt/kafka*.tgz && mv /opt/kafka* /opt/kafka
 
-ADD resources/init.sh .
-ADD resources/kafka.properties "${KAFKA_HOME}/config/"
+# Kafka Configuration 👇
+ADD resources/start-kafka.sh .
+ADD resources/kafka-server.properties "${KAFKA_HOME}/config/"
+ADD resources/meta.properties /tmp/kraft-combined-logs/
 
-CMD bash init.sh
+# Custom Scripts 👇
+ADD scripts/ /opt/scripts/
+
+# Scripts Dependencies 👇
+RUN apk add --no-cache bash jq
+
+CMD bash start-kafka.sh

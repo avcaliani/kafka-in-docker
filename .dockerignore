@@ -2,4 +2,4 @@
 .git
 
 # Custom Folders
-scripts/
+scripts/**/*.csv
