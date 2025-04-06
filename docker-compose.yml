@@ -1,0 +1,10 @@
+services:
+
+  kafka:
+    image: kafka-dev
+    container_name: kafka-dev
+    build: .
+    ports:
+      - 9092:9092 # Kafka
+      - 2181:2181 # Zookeeper
+  
