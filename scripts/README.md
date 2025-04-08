@@ -2,13 +2,7 @@
 
 How can you use the custom scripts?
 
-### 01 - Kafka Dev Image
-
-You need to have the `kafka-dev` built.  
-To do so, check the repository [readme](../README.md) to check the instructions
-to build the image properly.
-
-### 02 - Kafka Dev Service in Your Project
+### 01 - Kafka Dev Service in Your Project
 
 You need to configure a `kafka-dev` service in your other project, like this 👇
 
@@ -16,13 +10,13 @@ You need to configure a `kafka-dev` service in your other project, like this �
 # docker-compose.yml
 services:
     kafka-dev:
-        image: kafka-dev
+        image: avcaliani/kafka-in-docker
         container_name: kafka-dev
         ports:
             - 9092:9092 # Kafka
 ```
 
-### 03 - Execute the Script
+### 02 - Execute the Script
 
 #### DonutCoin Transactions 🍩
 
