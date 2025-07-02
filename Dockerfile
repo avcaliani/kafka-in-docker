@@ -12,9 +12,9 @@ ADD "https://downloads.apache.org/kafka/${KAFKA_VERSION}/kafka_${KAFKA_SCALA_VER
 RUN tar xfz /opt/kafka*.tgz -C /opt && rm /opt/kafka*.tgz && mv /opt/kafka* /opt/kafka
 
 # Kafka Configuration 👇
-ADD resources/start-kafka.sh .
-ADD resources/kafka-server.properties "${KAFKA_HOME}/config/"
-ADD resources/meta.properties /tmp/kraft-combined-logs/
+ADD resources/kafka/start-kafka.sh .
+ADD resources/kafka/kafka-server.properties "${KAFKA_HOME}/config/"
+ADD resources/kafka/meta.properties /tmp/kraft-combined-logs/
 
 # Custom Scripts 👇
 ADD scripts/ /opt/scripts/
@@ -22,4 +22,4 @@ ADD scripts/ /opt/scripts/
 # Scripts Dependencies 👇
 RUN apk add --no-cache bash jq
 
-CMD bash start-kafka.sh
+CMD ["bash", "start-kafka.sh"]
