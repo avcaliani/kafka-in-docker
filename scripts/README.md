@@ -33,6 +33,8 @@ docker compose exec kafka-dev /opt/scripts/donu-transactions.sh
 
 Payload Example 👇
 
+![gif](.img/kafka-msg.gif)
+
 ```json
 {
     "transaction_id": "82e4648eba623c53a22e3b6fbec9308f77d8a27631d74358a2176ed315330a7b",
