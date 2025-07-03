@@ -17,13 +17,16 @@ Here is the **project structure** 👇
 
 ```bash
 .
-├── Dockerfile          # 🐋 Dockerfile with Kafka setup.
-├── docker-compose.yml  # 🧩 Docker compose configuring the service.
+├── Dockerfile               # 🐋 Dockerfile with Kafka setup.
+├── docker-compose.yml      # 🧩 Docker compose configuring the service.
 ├── resources/
-│   ├── start-kafka.sh  # 🆙 Initialization script for Kafka.
-│   └── *.properties    # 📝 Kafka properties with custom configs.
+│   ├── kafka/
+│   │   ├── start-kafka.sh  # 🆙 Initialization script for Kafka.
+│   │   └── *.properties    # 📝 Kafka properties with custom configs.
+│   └── kafka-ui/
+│       └── *               # 📝 Kafka UI config.
 └── scripts/
-    └── *.sh            # ⚙️ Some scripts to propagate some data.
+    └── *.sh                # ⚙️ Some scripts to propagate some random data.
 ```
 
 > 💡 More details about the **scripts** [here](./scripts/README.md).
@@ -31,8 +34,15 @@ Here is the **project structure** 👇
 ## Quick Start
 
 ```bash
-docker compose build          # Creates "kafka-dev" image locally.
-docker compose up -d          # Starts the Kafka container.
+# 👇 Creates "kafka-dev" image locally
+docker compose build
+
+# Starts...
+#  - The Kafka Cluster
+#  - The Kafka UI at 👉 http://localhost:8080/
+docker compose up -d
+
+# 👇 Creates "kafka-dev" image locally
 docker compose logs kafka-dev # Show container logs.
 ```
 

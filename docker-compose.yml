@@ -1,9 +1,23 @@
 services:
 
+  # This image is available in DockerHub.
+  # https://hub.docker.com/r/avcaliani/kafka-in-docker
+  # But this one 👇 is the local image.
   kafka-dev:
     image: kafka-dev
     container_name: kafka-dev
     build: .
     ports:
       - 9092:9092 # Kafka
+  
+  # https://hub.docker.com/r/provectuslabs/kafka-ui
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:v0.7.2
+    ports:
+      - "8080:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
+    volumes:
+      - ./resources/kafka-ui/config.yml:/etc/kafkaui/dynamic_config.yaml
   
