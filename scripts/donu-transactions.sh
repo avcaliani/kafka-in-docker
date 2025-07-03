@@ -33,7 +33,7 @@ function new_transaction() {
     amount=$(awk 'BEGIN {srand(); printf "%.5f\n", rand() * 10}')
     fee=$(awk "BEGIN {printf \"%.5f\", $amount * 0.05}")
     transaction_id=$(echo -n "$from_user::$to_user::$amount::$timestamp" | sha256sum | awk '{print $1}')
-    echo "{
+    message=$(echo "{
         \"transaction_id\": \"$transaction_id\",
         \"timestamp\": \"$timestamp\",
         \"from\": \"$from_user\",
@@ -41,7 +41,10 @@ function new_transaction() {
         \"amount\": $amount,
         \"currency\": \"DONU\",
         \"fee\": $fee
-    }" | jq -c .
+    }" | jq -c .)
+    
+    # Message Pattern -> headers(key1:val1,key2:val2) msg-key:msg-value
+    printf "env:dev,source:web\t%s:%s\n" "$from_user" "$message"
 }
 
 echo ""
@@ -54,7 +57,10 @@ while true; do
     message=$(new_transaction)
     echo "$message" | bash "$KAFKA_HOME/bin/kafka-console-producer.sh" \
         --bootstrap-server "$KAFKA_BROKER" \
-        --topic "$KAFKA_TOPIC"
+        --topic "$KAFKA_TOPIC" \
+        --property "parse.key=true" \
+        --property "key.separator=:" \
+        --property "parse.headers=true"
     echo "$message"
     sleep 0.25
 done
