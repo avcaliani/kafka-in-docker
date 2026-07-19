@@ -1,5 +1,6 @@
 # Folders to Ignore
 .git
+.docs
 
 # Custom Folders
 scripts/**/*.csv
