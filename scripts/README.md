@@ -13,7 +13,7 @@ services:
         image: avcaliani/kafka-in-docker
         container_name: kafka-dev
         ports:
-            - 9092:9092 # Kafka
+            - "127.0.0.1:9092:9092" # Kafka
 ```
 
 ### 02 - Execute the Script
