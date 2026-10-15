@@ -9,6 +9,12 @@ services:
     build: .
     ports:
       - "127.0.0.1:9092:9092" # Kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
 
   # https://hub.docker.com/r/provectuslabs/kafka-ui
   kafka-ui:
@@ -17,7 +23,8 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     environment:
-      DYNAMIC_CONFIG_ENABLED: true
-    volumes:
-      - ./resources/kafka-ui/config.yml:/etc/kafkaui/dynamic_config.yaml
-
+      KAFKA_CLUSTERS_0_NAME: "kafka-dev-cluster"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka-dev:29092"
+    depends_on:
+      kafka-dev:
+        condition: service_healthy

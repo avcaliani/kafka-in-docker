@@ -24,11 +24,9 @@ Here is the **project structure** 👇
 ├── Dockerfile               # 🐋 Dockerfile with Kafka setup.
 ├── docker-compose.yml      # 🧩 Docker compose configuring the service.
 ├── resources/
-│   ├── kafka/
-│   │   ├── start-kafka.sh  # 🆙 Initialization script for Kafka.
-│   │   └── *.properties    # 📝 Kafka properties with custom configs.
-│   └── kafka-ui/
-│       └── *               # 📝 Kafka UI config.
+│   └── kafka/
+│       ├── start-kafka.sh  # 🆙 Initialization script for Kafka.
+│       └── *.properties    # 📝 Kafka properties with custom configs.
 └── scripts/
     └── *.sh                # ⚙️ Some scripts to propagate some random data.
 ```
