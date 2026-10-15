@@ -159,7 +159,4 @@ function main() {
     exit 0
 }
 
-# Only runs when executed, so the functions can be sourced for testing.
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    main "$@"
-fi
+main
