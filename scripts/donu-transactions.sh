@@ -32,7 +32,7 @@
 
 set -euo pipefail
 
-# Adding an user that doens't exist (20) on purpose.
+# Adding a user that doesn't exist (20) on purpose.
 # Check "users.csv" to see all available users.
 readonly NUM_OF_USERS=21
 readonly KAFKA_BROKER="${KAFKA_BROKER:-kafka-dev:29092}"
