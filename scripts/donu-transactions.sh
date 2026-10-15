@@ -114,10 +114,10 @@ function produce() {
         --bootstrap-server "$KAFKA_BROKER" \
         --topic "$KAFKA_TOPIC" \
         --sync \
-        --producer-property "linger.ms=0" \
-        --property "parse.key=true" \
-        --property "key.separator=:" \
-        --property "parse.headers=true"
+        --command-property "linger.ms=0" \
+        --reader-property "parse.key=true" \
+        --reader-property "key.separator=:" \
+        --reader-property "parse.headers=true"
 }
 
 function main() {
