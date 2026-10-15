@@ -39,6 +39,9 @@ services:
 docker compose exec kafka-dev /opt/scripts/donu-transactions.sh
 ```
 
+The script creates the topic (3 partitions) if it doesn't exist and keeps a single producer open, sending ~4 messages per second.
+Press `CTRL + C` to stop it. If the producer fails (e.g. broker down), the script exits with the producer's error code.
+
 Payload Example 👇
 
 ```json
