@@ -11,7 +11,7 @@
 # Notes:
 #   The topic is created once (3 partitions) if it doesn't exist, then a single
 #   long-lived "kafka-console-producer.sh" reads the messages from a generator
-#   loop through a pipe (~4 msg/s). Messages are sent synchronously, so if the
+#   loop through a pipe (~10 msg/s by default). Messages are sent synchronously, so if the
 #   broker is unreachable the producer exits and the script fails with its exit code.
 #
 #   To see if it's working, try reading the messages...
@@ -19,10 +19,12 @@
 #       --bootstrap-server "localhost:9092" \
 #       --topic "DONU_TRANSACTIONS_V1" --from-beginning
 #
-#   Broker and topic can be overridden with env vars, e.g.
-#   KAFKA_BROKER="localhost:9092" KAFKA_TOPIC="my-topic" ./donu-transactions.sh
+#   Broker and the seconds between messages (default 0.1) can be overridden with
+#   env vars, e.g.
+#   KAFKA_BROKER="localhost:9092" MESSAGE_INTERVAL="0.5" ./donu-transactions.sh
 #
-#   Linux only (reads "/proc/sys/kernel/random/uuid" for the transaction id).
+#   The transaction id is the sha256 of "from::to::amount::timestamp", so it can
+#   be rebuilt from the message fields to confirm they generated that id.
 #
 # Dependencies:
 #   bash jq
@@ -33,9 +35,9 @@ set -euo pipefail
 # Adding an user that doens't exist (20) on purpose.
 # Check "users.csv" to see all available users.
 readonly NUM_OF_USERS=21
-readonly NUM_OF_PARTITIONS=3
 readonly KAFKA_BROKER="${KAFKA_BROKER:-kafka-dev:29092}"
-readonly KAFKA_TOPIC="${KAFKA_TOPIC:-DONU_TRANSACTIONS_V1}"
+readonly KAFKA_TOPIC="DONU_TRANSACTIONS_V1"
+readonly MESSAGE_INTERVAL="${MESSAGE_INTERVAL:-0.1}"
 readonly KAFKA_BIN="${KAFKA_HOME:?KAFKA_HOME must be set}/bin"
 
 # Function: new_transaction
@@ -48,7 +50,6 @@ function new_transaction() {
     from_user=$(( RANDOM % NUM_OF_USERS ))
     to_user=$(( RANDOM % NUM_OF_USERS ))
     timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    transaction_id=$(< /proc/sys/kernel/random/uuid)
 
     # Money is handled as integers (1 unit = 0.00001 DONU) to avoid float noise.
     # Amount is in [0.00001, 10.00000] and the fee is 5% of it (rounded).
@@ -56,6 +57,11 @@ function new_transaction() {
     fee_units=$(( (amount_units * 5 + 50) / 100 ))
     amount=$(printf "%d.%05d" $(( amount_units / 100000 )) $(( amount_units % 100000 )))
     fee=$(printf "%d.%05d" $(( fee_units / 100000 )) $(( fee_units % 100000 )))
+
+    # jq prints numbers without trailing zeros (7.50000 becomes 7.5), so use that
+    # form in the hash. This way the id can be rebuilt from the message fields.
+    amount=$(jq -n "$amount")
+    transaction_id=$(echo -n "$from_user::$to_user::$amount::$timestamp" | sha256sum | cut -d' ' -f1)
 
     message=$(jq -nc \
         --arg transaction_id "$transaction_id" \
@@ -79,12 +85,12 @@ function new_transaction() {
 }
 
 # Function: generate_loop
-# Purpose:  Print a new transaction every ~0.25s, forever.
+# Purpose:  Print a new transaction every MESSAGE_INTERVAL seconds, forever.
 # Usage:    generate_loop | producer
 function generate_loop() {
     while true; do
         new_transaction
-        sleep 0.25
+        sleep "$MESSAGE_INTERVAL"
     done
 }
 
@@ -96,7 +102,7 @@ function create_topic() {
         --bootstrap-server "$KAFKA_BROKER" \
         --create --if-not-exists \
         --topic "$KAFKA_TOPIC" \
-        --partitions "$NUM_OF_PARTITIONS" \
+        --partitions 3 \
         --replication-factor 1
 }
 

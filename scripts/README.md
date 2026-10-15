@@ -39,7 +39,7 @@ services:
 docker compose exec kafka-dev /opt/scripts/donu-transactions.sh
 ```
 
-The script creates the topic (3 partitions) if it doesn't exist and keeps a single producer open, sending ~4 messages per second.
+The script creates the topic (3 partitions) if it doesn't exist and keeps a single producer open, sending ~10 messages per second by default.
 Press `CTRL + C` to stop it. If the producer fails (e.g. broker down), the script exits with the producer's error code.
 
 Payload Example 👇
@@ -47,7 +47,7 @@ Payload Example 👇
 ```json
 // topic: DONU_TRANSACTIONS_V1
 {
-    "transaction_id": "3f2b8c1e-6a4d-4e0b-9d7a-5c1f2e8b7a90",
+    "transaction_id": "82e4648eba623c53a22e3b6fbec9308f77d8a27631d74358a2176ed315330a7b",
     "timestamp": "2025-04-07T20:47:06Z",
     "from": "16",
     "to": "20",
@@ -57,11 +57,13 @@ Payload Example 👇
 }
 ```
 
-Broker and topic can be overridden through env vars (defaults shown) 👇
+The `transaction_id` is the sha256 of `from::to::amount::timestamp`, so you can rebuild it from the message fields to confirm they generated that id.
+
+The broker and the seconds between messages can be overridden through env vars (defaults shown) 👇
 
 ```bash
 docker compose exec \
     -e KAFKA_BROKER="kafka-dev:29092" \
-    -e KAFKA_TOPIC="DONU_TRANSACTIONS_V1" \
+    -e MESSAGE_INTERVAL="0.1" \
     kafka-dev /opt/scripts/donu-transactions.sh
 ```
