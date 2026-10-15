@@ -25,7 +25,6 @@ RUN wget -q -O /tmp/kafka.tgz \
 # Kafka Configuration 👇
 COPY resources/kafka/start-kafka.sh .
 COPY resources/kafka/kafka-server.properties "${KAFKA_HOME}/config/"
-COPY resources/kafka/meta.properties /tmp/kraft-combined-logs/
 
 # Custom Scripts 👇
 COPY scripts/ /opt/scripts/

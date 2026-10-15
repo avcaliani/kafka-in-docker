@@ -64,6 +64,9 @@ docker compose up
 > If `docker compose` doesn't work for you, try `docker-compose`.  
 > If it still doesn't work, check if you have docker compose installed.
 
+> 💾 Kafka data lives in the container (`/tmp/kraft-combined-logs`) and is lost when the container is removed.  
+> Mount a volume there to keep it.
+
 </details>
 
 ### Playground
