@@ -6,6 +6,7 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/avcaliani/kafka-in-docker?logo=docker&logoColor=white&color=2496ED)
 ![Image Size](https://img.shields.io/docker/image-size/avcaliani/kafka-in-docker?logo=docker&logoColor=white&color=orange)
 ![Latest Tag](https://img.shields.io/github/v/tag/avcaliani/kafka-in-docker?logo=github&logoColor=white&color=blueviolet)
+![Kafka](https://img.shields.io/badge/Kafka-4.3.1-231F20?logo=apachekafka&logoColor=white)
 
 My goal with this repository is to have a Kafka template that I can setup locally
 and use it in other projects as well, so I don't have to copy/paste not maintaining
