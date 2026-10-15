@@ -1,4 +1,9 @@
-FROM amazoncorretto:21-alpine3.18
+FROM eclipse-temurin:21-jre-alpine-3.24
+
+LABEL org.opencontainers.image.source="https://github.com/avcaliani/kafka-in-docker" \
+      org.opencontainers.image.title="kafka-in-docker" \
+      org.opencontainers.image.description="Single-node Apache Kafka (KRaft) image for local development" \
+      org.opencontainers.image.licenses="MIT"
 
 # Kafka Version 👇
 ARG KAFKA_VERSION="4.0.0"
@@ -23,10 +28,13 @@ RUN wget -q -O /tmp/kafka.tgz \
     && rm /tmp/kafka.tgz
 
 # Kafka Configuration 👇
+WORKDIR ${KAFKA_HOME}
 COPY resources/kafka/start-kafka.sh .
 COPY resources/kafka/kafka-server.properties "${KAFKA_HOME}/config/"
 
 # Custom Scripts 👇
 COPY scripts/ /opt/scripts/
+
+EXPOSE 9092 29092
 
 CMD ["bash", "start-kafka.sh"]
