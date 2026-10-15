@@ -15,6 +15,4 @@ echo "Kafka Home.: $KAFKA_HOME"
 echo ""
 
 echo "👉 Kafka..."
-# exec replaces this shell, so Kafka becomes PID 1, receives SIGTERM
-# on "docker stop" and its exit code is the container's exit code.
 exec bash "$KAFKA_HOME/bin/kafka-server-start.sh" "$KAFKA_HOME/config/kafka-server.properties"
