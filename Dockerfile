@@ -1,23 +1,40 @@
-FROM amazoncorretto:21-alpine3.18
+# 📦 Download Stage
+FROM amazoncorretto:21-alpine3.18 AS download
 
 # Kafka Version 👇
 ARG KAFKA_VERSION="4.0.0"
 ARG KAFKA_SCALA_VERSION="2.13"
+# SHA-512 of the tarball above 👇
+# Source: https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${KAFKA_SCALA_VERSION}-${KAFKA_VERSION}.tgz.sha512
+# ⚠️ Must be updated together with KAFKA_VERSION (and KAFKA_SCALA_VERSION).
+ARG KAFKA_SHA512="00722ab0a6b954e0006994b8d589dcd8f26e1827c47f70b6e820fb45aa35945c19163b0f188caf0caf976c11f7ab005fd368c54e5851e899d2de687a804a5eb9"
+
+RUN apk add --no-cache curl
+
+# Downloading, Verifying and Extracting Kafka 👇
+RUN curl -fsSL -o /tmp/kafka.tgz \
+      "https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${KAFKA_SCALA_VERSION}-${KAFKA_VERSION}.tgz" \
+    && echo "${KAFKA_SHA512}  /tmp/kafka.tgz" | sha512sum -c - \
+    && mkdir -p /opt/kafka \
+    && tar xzf /tmp/kafka.tgz -C /opt/kafka --strip-components=1 \
+    && rm /tmp/kafka.tgz
+
+# 🚀 Final Stage
+FROM amazoncorretto:21-alpine3.18
 
 ENV KAFKA_HOME="/opt/kafka"
 ENV PATH="$PATH:${KAFKA_HOME}/bin"
 
 # Installing Kafka 👇
-ADD "https://downloads.apache.org/kafka/${KAFKA_VERSION}/kafka_${KAFKA_SCALA_VERSION}-${KAFKA_VERSION}.tgz" /opt/
-RUN tar xfz /opt/kafka*.tgz -C /opt && rm /opt/kafka*.tgz && mv /opt/kafka* /opt/kafka
+COPY --from=download /opt/kafka "${KAFKA_HOME}"
 
 # Kafka Configuration 👇
-ADD resources/kafka/start-kafka.sh .
-ADD resources/kafka/kafka-server.properties "${KAFKA_HOME}/config/"
-ADD resources/kafka/meta.properties /tmp/kraft-combined-logs/
+COPY resources/kafka/start-kafka.sh .
+COPY resources/kafka/kafka-server.properties "${KAFKA_HOME}/config/"
+COPY resources/kafka/meta.properties /tmp/kraft-combined-logs/
 
 # Custom Scripts 👇
-ADD scripts/ /opt/scripts/
+COPY scripts/ /opt/scripts/
 
 # Scripts Dependencies 👇
 RUN apk add --no-cache bash jq
