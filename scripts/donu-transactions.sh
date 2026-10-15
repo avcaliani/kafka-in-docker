@@ -1,6 +1,6 @@
 #!/bin/bash
 # Name: donu-transactions.sh
-# Description: 
+# Description:
 #   Publishes random messages to a Kafka topic "DONU_TRANSACTIONS_V1".
 #   The messages are simple JSONs that represent some fake DonutCoin transactions.
 #   DonutCoin (DONU) – plays on Homer’s love for donuts 🍩
@@ -14,35 +14,56 @@
 #       --bootstrap-server "localhost:9092" \
 #       --topic "DONU_TRANSACTIONS_V1" --from-beginning
 #
+#   Broker and topic can be overridden with env vars, e.g.
+#   KAFKA_BROKER="localhost:9092" KAFKA_TOPIC="my-topic" ./donu-transactions.sh
+#
+#   Linux only (reads "/proc/sys/kernel/random/uuid" for the transaction id).
+#
 # Dependencies:
 #   bash jq
 
 # Adding an user that doens't exist (20) on purpose.
 # Check "users.csv" to see all available users.
-readonly NUM_OF_USERS=21 
-readonly KAFKA_BROKER="kafka-dev:29092"
-readonly KAFKA_TOPIC="DONU_TRANSACTIONS_V1"
+readonly NUM_OF_USERS=21
+readonly KAFKA_BROKER="${KAFKA_BROKER:-kafka-dev:29092}"
+readonly KAFKA_TOPIC="${KAFKA_TOPIC:-DONU_TRANSACTIONS_V1}"
 
 # Function: new_transaction
 # Purpose:  Create a random DonutCoin transaction.
 # Usage:    new_transaction
 function new_transaction() {
+    local from_user to_user timestamp transaction_id
+    local amount_units fee_units amount fee message
+
     from_user=$(( RANDOM % NUM_OF_USERS ))
     to_user=$(( RANDOM % NUM_OF_USERS ))
     timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    amount=$(awk 'BEGIN {srand(); printf "%.5f\n", rand() * 10}')
-    fee=$(awk "BEGIN {printf \"%.5f\", $amount * 0.05}")
-    transaction_id=$(echo -n "$from_user::$to_user::$amount::$timestamp" | sha256sum | awk '{print $1}')
-    message=$(echo "{
-        \"transaction_id\": \"$transaction_id\",
-        \"timestamp\": \"$timestamp\",
-        \"from\": \"$from_user\",
-        \"to\": \"$to_user\",
-        \"amount\": $amount,
-        \"currency\": \"DONU\",
-        \"fee\": $fee
-    }" | jq -c .)
-    
+    transaction_id=$(< /proc/sys/kernel/random/uuid)
+
+    # Money is handled as integers (1 unit = 0.00001 DONU) to avoid float noise.
+    # Amount is in [0.00001, 10.00000] and the fee is 5% of it (rounded).
+    amount_units=$(( (((RANDOM << 15) | RANDOM) % 1000000) + 1 ))
+    fee_units=$(( (amount_units * 5 + 50) / 100 ))
+    amount=$(printf "%d.%05d" $(( amount_units / 100000 )) $(( amount_units % 100000 )))
+    fee=$(printf "%d.%05d" $(( fee_units / 100000 )) $(( fee_units % 100000 )))
+
+    message=$(jq -nc \
+        --arg transaction_id "$transaction_id" \
+        --arg timestamp "$timestamp" \
+        --arg from "$from_user" \
+        --arg to "$to_user" \
+        --argjson amount "$amount" \
+        --argjson fee "$fee" \
+        '{
+            transaction_id: $transaction_id,
+            timestamp: $timestamp,
+            from: $from,
+            to: $to,
+            amount: $amount,
+            currency: "DONU",
+            fee: $fee
+        }')
+
     # Message Pattern -> headers(key1:val1,key2:val2) msg-key:msg-value
     printf "env:dev,source:web\t%s:%s\n" "$from_user" "$message"
 }
