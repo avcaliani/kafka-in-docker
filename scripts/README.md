@@ -14,7 +14,22 @@ services:
         container_name: kafka-dev
         ports:
             - "127.0.0.1:9092:9092" # Kafka
+        healthcheck:
+            test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+            interval: 10s
+            timeout: 10s
+            retries: 10
+            start_period: 30s
+
+    # Optional: any service that needs a ready broker.
+    my-app:
+        image: my-app
+        depends_on:
+            kafka-dev:
+                condition: service_healthy
 ```
+
+> 💡 The healthcheck lets other services wait for a ready broker (`condition: service_healthy`) instead of sleeping or retrying.
 
 ### 02 - Execute the Script
 
