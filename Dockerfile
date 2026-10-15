@@ -1,10 +1,5 @@
 FROM eclipse-temurin:21-jre-alpine-3.24
 
-LABEL org.opencontainers.image.source="https://github.com/avcaliani/kafka-in-docker" \
-      org.opencontainers.image.title="kafka-in-docker" \
-      org.opencontainers.image.description="Single-node Apache Kafka (KRaft) image for local development" \
-      org.opencontainers.image.licenses="MIT"
-
 # Kafka Version 👇
 ARG KAFKA_VERSION="4.0.0"
 ARG KAFKA_SCALA_VERSION="2.13"
