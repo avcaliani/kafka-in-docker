@@ -14,19 +14,26 @@ ENV PATH="$PATH:${KAFKA_HOME}/bin"
 # Scripts Dependencies 👇
 RUN apk add --no-cache bash jq
 
+# Non-root user 👇
+RUN addgroup -S kafka && adduser -S -D -H -G kafka kafka
+
 # Installing Kafka (download, verify, extract, clean up in a single layer) 👇
 RUN wget -q -O /tmp/kafka.tgz \
       "https://archive.apache.org/dist/kafka/${KAFKA_VERSION}/kafka_${KAFKA_SCALA_VERSION}-${KAFKA_VERSION}.tgz" \
     && echo "${KAFKA_SHA512}  /tmp/kafka.tgz" | sha512sum -c - \
     && mkdir -p "${KAFKA_HOME}" \
     && tar xzf /tmp/kafka.tgz -C "${KAFKA_HOME}" --strip-components=1 \
-    && rm /tmp/kafka.tgz
+    && rm /tmp/kafka.tgz \
+    && mkdir -p /tmp/kraft-combined-logs \
+    && chown -R kafka:kafka "${KAFKA_HOME}" /tmp/kraft-combined-logs
 
 # Kafka Configuration 👇
-COPY resources/kafka/start-kafka.sh .
-COPY resources/kafka/kafka-server.properties "${KAFKA_HOME}/config/"
+COPY --chown=kafka:kafka resources/kafka/start-kafka.sh .
+COPY --chown=kafka:kafka resources/kafka/kafka-server.properties "${KAFKA_HOME}/config/"
 
 # Custom Scripts 👇
 COPY scripts/ /opt/scripts/
+
+USER kafka
 
 CMD ["bash", "start-kafka.sh"]

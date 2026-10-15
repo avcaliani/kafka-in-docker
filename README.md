@@ -65,7 +65,8 @@ docker compose up
 > If it still doesn't work, check if you have docker compose installed.
 
 > 💾 Kafka data lives in the container (`/tmp/kraft-combined-logs`) and is lost when the container is removed.  
-> Mount a volume there to keep it.
+> Mount a volume there to keep it.  
+> Kafka runs as the non-root `kafka` user (uid `100`), so a host bind mount must be writable by it.
 
 </details>
 
