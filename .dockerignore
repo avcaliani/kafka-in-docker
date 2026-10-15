@@ -2,5 +2,5 @@
 .git
 .docs
 
-# Custom Folders
+# CSV files in scripts/ (e.g. the reference users list) are excluded from the image on purpose
 scripts/**/*.csv

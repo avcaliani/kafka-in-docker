@@ -8,7 +8,7 @@
 ![Latest Tag](https://img.shields.io/github/v/tag/avcaliani/kafka-in-docker?logo=github&logoColor=white&color=blueviolet)
 
 My goal with this repository is to have a Kafka template that I can setup locally
-and use it in other projects as well, so I don't have to copy/paste not maintaing
+and use it in other projects as well, so I don't have to copy/paste not maintaining
 this code/configs in every repo I need a local kafka instance.
 
 I hope this can be useful to you too.
@@ -46,7 +46,7 @@ This repo ships with a script that publishes random fake DonutCoin transactions 
 
 ## Getting Started
 
-Commnands to up the Kafka Cluster locally 
+Commands to up the Kafka Cluster locally 
 
 <details>
 <summary>Show setup commands 👇</summary>
@@ -82,7 +82,7 @@ docker compose exec kafka-dev kafka-topics.sh \
     --create \
     --bootstrap-server "localhost:9092" \
     --replication-factor "1" \
-    --partitions "1" \
+    --partitions "3" \
     --topic "MY_TOPIC"
 
 # Checking the available topics 👇
