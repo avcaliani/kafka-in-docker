@@ -9,6 +9,11 @@
 #   ./donu-transactions.sh
 #
 # Notes:
+#   The topic is created once (3 partitions) if it doesn't exist, then a single
+#   long-lived "kafka-console-producer.sh" reads the messages from a generator
+#   loop through a pipe (~4 msg/s). Messages are sent synchronously, so if the
+#   broker is unreachable the producer exits and the script fails with its exit code.
+#
 #   To see if it's working, try reading the messages...
 #   docker compose exec kafka-dev kafka-console-consumer.sh \
 #       --bootstrap-server "localhost:9092" \
@@ -21,12 +26,17 @@
 #
 # Dependencies:
 #   bash jq
+#   KAFKA_HOME (kafka-topics.sh and kafka-console-producer.sh)
+
+set -euo pipefail
 
 # Adding an user that doens't exist (20) on purpose.
 # Check "users.csv" to see all available users.
 readonly NUM_OF_USERS=21
+readonly NUM_OF_PARTITIONS=3
 readonly KAFKA_BROKER="${KAFKA_BROKER:-kafka-dev:29092}"
 readonly KAFKA_TOPIC="${KAFKA_TOPIC:-DONU_TRANSACTIONS_V1}"
+readonly KAFKA_BIN="${KAFKA_HOME:?KAFKA_HOME must be set}/bin"
 
 # Function: new_transaction
 # Purpose:  Create a random DonutCoin transaction.
@@ -68,21 +78,82 @@ function new_transaction() {
     printf "env:dev,source:web\t%s:%s\n" "$from_user" "$message"
 }
 
-echo ""
-echo "*** DonutCoin Transactions Generator **"
-echo "Kafka Broker: $KAFKA_BROKER"
-echo "Kafka Topic: $KAFKA_TOPIC"
-echo "To stop the execution press CTRL + C ✋"
-echo ""
-while true; do
-    message=$(new_transaction)
-    echo "$message" | bash "$KAFKA_HOME/bin/kafka-console-producer.sh" \
+# Function: generate_loop
+# Purpose:  Print a new transaction every ~0.25s, forever.
+# Usage:    generate_loop | producer
+function generate_loop() {
+    while true; do
+        new_transaction
+        sleep 0.25
+    done
+}
+
+# Function: create_topic
+# Purpose:  Create the topic once, doesn't fail if it already exists.
+# Usage:    create_topic
+function create_topic() {
+    bash "$KAFKA_BIN/kafka-topics.sh" \
+        --bootstrap-server "$KAFKA_BROKER" \
+        --create --if-not-exists \
+        --topic "$KAFKA_TOPIC" \
+        --partitions "$NUM_OF_PARTITIONS" \
+        --replication-factor 1
+}
+
+# Function: produce
+# Purpose:  Single long-lived producer, reads the messages from stdin.
+# Usage:    generate_loop | produce
+function produce() {
+    bash "$KAFKA_BIN/kafka-console-producer.sh" \
         --bootstrap-server "$KAFKA_BROKER" \
         --topic "$KAFKA_TOPIC" \
+        --sync \
+        --producer-property "linger.ms=0" \
         --property "parse.key=true" \
         --property "key.separator=:" \
         --property "parse.headers=true"
-    echo "$message"
-    sleep 0.25
-done
-exit 0
+}
+
+function main() {
+    echo ""
+    echo "*** DonutCoin Transactions Generator **"
+    echo "Kafka Broker: $KAFKA_BROKER"
+    echo "Kafka Topic: $KAFKA_TOPIC"
+    echo "To stop the execution press CTRL + C ✋"
+    echo ""
+
+    create_topic
+
+    # CTRL + C reaches the whole pipeline (same process group), so the producer
+    # flushes and exits by itself. The trap only marks it as an expected stop.
+    local stopping=false
+    trap 'stopping=true' INT
+
+    # PIPESTATUS is needed because with "pipefail" a SIGPIPE in
+    # the generator would hide the real exit code of the producer.
+    local statuses
+    set +e
+    generate_loop | tee /dev/stderr | produce
+    statuses=("${PIPESTATUS[@]}")
+    set -e
+
+    if [[ "$stopping" == true ]]; then
+        echo ""
+        echo "Stopped."
+        exit 0
+    fi
+    if [[ "${statuses[2]}" -ne 0 ]]; then
+        echo "ERROR: kafka-console-producer.sh failed (exit code ${statuses[2]})." >&2
+        exit "${statuses[2]}"
+    fi
+    if [[ "${statuses[0]}" -ne 0 && "${statuses[0]}" -ne 141 ]]; then
+        echo "ERROR: generator failed (exit code ${statuses[0]})." >&2
+        exit "${statuses[0]}"
+    fi
+    exit 0
+}
+
+# Only runs when executed, so the functions can be sourced for testing.
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
+fi
