@@ -67,3 +67,21 @@ docker compose exec \
     -e MESSAGE_INTERVAL="0.1" \
     kafka-dev /opt/scripts/donu-transactions.sh
 ```
+
+### 03 - Mock Data Generator 🐍
+
+`main.py` creates fake Simpsons data with the Python standard library only (Python 3.11+, run it inside a virtualenv).
+The users and products come from the CSV files in `data/simpsons/`.
+
+```bash
+# 5 donu transactions as JSON lines in the terminal
+python main.py donu-transactions --count 5
+
+# 1000 Kiwi-e-Mart purchases in a CSV file, 10% of them wrong
+python main.py kiwi-e-mart-purchases --count 1000 --error-rate 0.1 --output csv --output-path purchases.csv
+
+# Forever (--count 0), one record every 0.5 seconds, until CTRL + C
+python main.py donu-transactions --count 0 --interval 0.5
+```
+
+A wrong record has an unknown user id (`999`), a negative amount or quantity, or a blank timestamp.
